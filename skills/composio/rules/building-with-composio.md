@@ -107,6 +107,24 @@ Direct tool execution without agent frameworks — full control over auth, execu
 - [Toolkit Management](app-toolkits.md) — query toolkits, categories, and auth requirements
 - [Auth Popup UI](app-auth-popup-ui.md) — build popup-based OAuth flows
 
+#### Auth config tool restrictions
+
+Auth config updates preserve omitted fields. If an auth config was previously
+restricted to specific tools, clear that restriction by sending an explicit
+empty `toolsAvailableForExecution` array:
+
+```typescript
+await composio.authConfigs.update('auth_config_789', {
+  type: 'custom',
+  toolAccessConfig: {
+    toolsAvailableForExecution: []
+  }
+});
+```
+
+See [Auth Config Management](app-auth-configs.md) for the full auth config
+lifecycle.
+
 ### Extensibility
 - [Tool Modifiers](app-modifiers.md) — schema modification and execution hooks for logging and modifications
 

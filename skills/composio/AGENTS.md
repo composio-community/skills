@@ -68,9 +68,9 @@ composio upgrade
    ```
    Share the login URL with the agent's user to complete login in their browser.
 
-2. **Complete login with session key** — Use the `key` from the previous output to check if the user has logged in:
+2. **Complete login with session key** — Use the `cli_key` from the previous output to check if the user has logged in:
    ```bash
-   composio login --key "<key>"
+   composio login --key "<cli_key>"
    ```
    Without `--no-wait`: polls until the session is linked (same as browser flow after printing URL).
    With `--no-wait`: checks once and fails if not linked. For agents, once the user completes login, run with `--no-wait` to avoid blocking.
@@ -369,6 +369,24 @@ Direct tool execution without agent frameworks — full control over auth, execu
 - [Toolkit Management](app-toolkits.md) — query toolkits, categories, and auth requirements
 - [Auth Popup UI](app-auth-popup-ui.md) — build popup-based OAuth flows
 
+#### Auth config tool restrictions
+
+Auth config updates preserve omitted fields. If an auth config was previously
+restricted to specific tools, clear that restriction by sending an explicit
+empty `toolsAvailableForExecution` array:
+
+```typescript
+await composio.authConfigs.update('auth_config_789', {
+  type: 'custom',
+  toolAccessConfig: {
+    toolsAvailableForExecution: []
+  }
+});
+```
+
+See [Auth Config Management](app-auth-configs.md) for the full auth config
+lifecycle.
+
 ### Extensibility
 - [Tool Modifiers](app-modifiers.md) — schema modification and execution hooks for logging and modifications
 
@@ -400,5 +418,5 @@ Using incorrect slugs causes runtime errors.
 
 ---
 
-_This file was automatically generated from individual rule files on 2026-03-13T12:37:41.138Z_
+_This file was automatically generated from individual rule files on 2026-07-01T09:35:15.145Z_
 _To update, run: `npm run build:agents`_
