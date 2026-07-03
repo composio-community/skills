@@ -129,6 +129,21 @@ const restricted = await composio.authConfigs.update('auth_config_789', {
 });
 ```
 
+### Clear tool restrictions
+
+Auth config updates use PATCH semantics: omitted fields are preserved. To remove
+tool restrictions after setting them, explicitly send an empty
+`toolsAvailableForExecution` array.
+
+```typescript
+await composio.authConfigs.update('auth_config_789', {
+  type: 'custom',
+  toolAccessConfig: {
+    toolsAvailableForExecution: []
+  }
+});
+```
+
 ## Enable/Disable Auth Configs
 
 ```typescript
@@ -182,6 +197,17 @@ await composio.authConfigs.delete('auth_config_123');
   credentials: { /* auth fields */ },
   toolAccessConfig: {
     toolsAvailableForExecution: ['TOOL_SLUG_1', 'TOOL_SLUG_2']
+  }
+}
+```
+
+To clear restrictions, send an explicit empty array:
+
+```typescript
+{
+  type: 'custom',
+  toolAccessConfig: {
+    toolsAvailableForExecution: []
   }
 }
 ```
