@@ -1,0 +1,4 @@
+interface:
+  display_name: "Composio"
+  short_description: "Add Composio tools to an agent or codebase"
+  default_prompt: "Use $composio to add Composio to this codebase and complete one real tool call."

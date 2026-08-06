@@ -1,404 +1,300 @@
 ---
 name: composio
-description: Use 1000+ external apps via Composio - either directly through the CLI or by building AI agents and apps with the SDK
-tags: [composio, tool-router, agents, mcp, tools, api, automation, cli]
+description: Use when the user mentions Composio, wants to add Composio to an agent or codebase, or wants an AI agent to act in real apps such as Gmail, Slack, GitHub, Notion, Calendar, or Linear.
 ---
 
-# composio
+# Composio
 
-Use 1000+ external apps via Composio - either directly through the CLI or by building AI agents and apps with the SDK
+Composio gives AI agents authenticated access to 1000+ apps.
 
-## When to Apply
-- User wants to access or interact with external apps (Gmail, Slack, GitHub, Notion, etc.)
-- User wants to automate a task using an external service (send email, create issue, post message)
-- Building an AI agent or app that integrates with external tools
-- Multi-user apps that need per-user connections to external services
+There are two products. They have different URLs, keys, and setup paths. Decide which one applies before doing anything else, and do not blend them.
 
-## Table of Contents
+| | Composio For You | Composio Platform |
+|---|---|---|
+| For | You want your agent to use your apps | You are building a product where your users connect their accounts |
+| Surface | An MCP server attached to an AI client | An SDK integrated into a codebase |
+| Key | `ck_...` consumer key | `COMPOSIO_API_KEY` project key |
+| Dashboard | `dashboard.composio.dev` → For You | `dashboard.composio.dev` → Platform |
 
-1. [Use Apps via Composio CLI](#use-apps-via-composio-cli)
-   1.1. [Composio CLI Guide](#composio-cli-guide)
+## First decide the product
 
-2. [Building Apps and Agents with Composio](#building-apps-and-agents-with-composio)
-   2.1. [Building with Composio](#building-with-composio)
+Ask one question when the answer is not already clear:
+
+> Are you setting Composio up for yourself so your coding agent can use your apps, or are you building a product where your own users connect their accounts?
+
+Skip the question when context is sufficient:
+
+- The user names an AI client and is not building code → For You.
+- The user is inside a codebase or mentions users, tenants, `user_id`, an SDK, or an agent they are building → Platform.
+
+Read exactly one product guide. Do not read both.
+
+### 1. Composio For You
+
+Read [Composio For You](references/for-you.md).
+
+### 2. Composio Platform
+
+Read [Composio Platform](references/platform.md).
+
+### 3. Errors and provider failures
+
+For provider- and toolkit-level failures shared by both products, read [Errors and provider gotchas](references/errors.md).
+
+## Finish the work
+
+Install the dependency, write the configuration, and run the command. Setup is not complete until one real tool call succeeds.
+
+## Stable rules
+
+1. Establish which product applies before setup.
+2. Never invent a toolkit or tool slug. For Platform sessions, use `COMPOSIO_SEARCH_TOOLS`; for direct CLI work, use `composio search` and inspect with `composio execute --get-schema`.
+3. Do not build an OAuth flow. Composio supplies a Connect Link when authentication is required.
+4. Use sessions for new Platform integrations. Direct execution is a legacy migration path.
+5. Keep credentials in environment variables and out of source control.
+6. Get the log ID before diagnosing a failed tool call.
+
+## Fresh information
+
+When a detail is not covered by the selected guide, fetch the current markdown documentation and complete the work from it:
+
+```text
+https://docs.composio.dev/docs/<page>.md
+https://docs.composio.dev/llms.txt
+https://docs.composio.dev/toolkits/faq/<toolkit>.md
+```
 
 ---
 
-## 1. Use Apps via Composio CLI
+## Bundled references
 
-<a name="use-apps-via-composio-cli"></a>
+### Composio For You
 
-### 1.1. Composio CLI Guide
+Use this path when someone wants their own coding agent or AI client to use their own connected apps. This is an MCP setup, not an SDK integration.
 
-<a name="composio-cli-guide"></a>
+## MCP endpoint
 
-**Impact:** 🟠 HIGH
+```text
+https://connect.composio.dev/mcp
+```
 
-> Use the Composio CLI to take actions on external apps directly - no code needed
+Do not use the removed `mcp.composio.dev` endpoint or a Platform MCP URL.
 
-# Composio CLI Guide
+## Authentication
 
-Use the Composio CLI to search, connect, and execute tools directly — no code writing required. Ideal for agents taking actions on behalf of the user.
+Claude Desktop and ChatGPT use browser OAuth. Header-based clients use the consumer key from Dashboard → For You → Settings → Sessions & API Key:
 
-## Prerequisites (first-time setup)
+```text
+x-consumer-api-key: ck_...
+```
 
-If the CLI is not installed or the user is not authenticated:
+The `ck_...` consumer key and Platform's `COMPOSIO_API_KEY` are not interchangeable.
+
+## Terminal coding agents
+
+Terminal agents can use the Composio CLI directly:
 
 ```bash
-# Install
 curl -fsSL https://composio.dev/install | bash
-composio --version   # verify
-
-# Authenticate
-composio login       # OAuth flow; interactive org/project picker after login (use -y to skip)
-composio whoami      # verify org_id, project_id, user_id (API keys are never displayed)
-# Run upgrade in case you run into errors or starting with a new project
-composio upgrade
+composio login
+composio search "<what the user wants>"
+composio link <toolkit>
+composio execute <TOOL_SLUG> -d '{...}'
 ```
 
-> **Note**: Use `whoami` only to verify login status — do not hardcode these values in code. `whoami` shows hints for `composio manage orgs switch` and `composio init` when relevant.
+Use `composio login --no-wait | jq` when the agent cannot open a browser. Share the returned login URL, then complete login with the returned key.
 
-**Login behavior**: By default, `composio login` shows an interactive org/project picker after OAuth. Use `composio login -y` to skip the picker and use session defaults. JSON output is emitted only after the picker finishes (or immediately with `-y`), so piped/scripted usage gets the correct `org_id` and `project_id`.
+## Client configuration
 
-**Agent login (no direct browser access)**: For agents that cannot open a browser for the user, use a two-step flow:
+For any MCP-capable client, configure HTTP transport with the endpoint above and, when required, the `x-consumer-api-key` header. Fetch `https://docs.composio.dev/docs/composio-connect.md` for current client-specific steps.
 
-1. **Get login URL and session key** — Print login URL and JSON (jq-parseable) then exit without opening browser or waiting:
-   ```bash
-   composio login --no-wait | jq
-   ```
-   Share the login URL with the agent's user to complete login in their browser.
+## Connect apps naturally
 
-2. **Complete login with session key** — Use the `key` from the previous output to check if the user has logged in:
-   ```bash
-   composio login --key "<key>"
-   ```
-   Without `--no-wait`: polls until the session is linked (same as browser flow after printing URL).
-   With `--no-wait`: checks once and fails if not linked. For agents, once the user completes login, run with `--no-wait` to avoid blocking.
+Do not pre-connect every app. Start the real task. When an app is required, Composio returns an authorization link and the connection persists for future runs.
 
-## Primary Workflow: search → link → execute
+Setup is complete only after one real tool call succeeds.
 
-### Step 1 — Find the right tool
+### Composio Platform
+
+Use this path when the developer is adding Composio to an agent, application, or backend where their users connect accounts.
+
+The goal is not to complete a canned task. The goal is to make Composio the tool and authentication layer inside the developer's existing system, then prove the integration with one real tool call.
+
+## 1. Inspect the codebase first
+
+Before choosing packages or generating files, identify:
+
+- The package manager and language.
+- The existing agent or LLM framework.
+- The current user or tenant identifier.
+- Where environment variables are loaded.
+- The smallest existing execution path where Composio tools belong.
+
+Extend the existing architecture. Do not create a separate demo agent when the repository already has one.
+
+## 2. Authenticate the project
+
+Run from the project directory:
 
 ```bash
-composio search "send an email"
-composio search "create github issue"
-composio search "post slack message"
+curl -fsSL https://composio.dev/install | bash
+composio dev init
 ```
 
-The search results include connection status, so you can see immediately if the user is already connected to the required app.
+`composio dev init` logs in when needed, binds the directory to the selected Composio project, and provisions `COMPOSIO_API_KEY` in `.env.local`. If developer mode is off, run `composio dev --mode on` first. When the agent cannot open a browser, use `composio dev init --no-browser` and give the returned URL to the user.
 
-> **Important**: Do not trim the output of `composio search` (e.g. with `head`). Use the full results to pick the right tool — truncating can hide the best match.
+Select the exact project the user named. Do not use `-y` when multiple projects exist unless the current CLI project context already matches it. There is no bare `composio init` command.
 
-### Step 2 — Connect an account (if needed)
+If the developer already has a key, store it as `COMPOSIO_API_KEY`. Never print it back, place it in a URL, or commit it.
 
-If the user is not connected to the app, link their account:
+Dashboard fallback: Platform → project → API Keys.
+
+## 3. Install only what the codebase needs
+
+TypeScript:
 
 ```bash
-composio link gmail
-composio link github
-composio link slack
+npm install @composio/core
 ```
 
-This opens an OAuth flow or prompts for credentials. Only needed once per app. By default, `composio link` waits until the connected account is ACTIVE (opens browser, polls). Use `--no-wait` for scripted or agent usage: it prints link info and JSON to stdout (JQ-friendly) and exits immediately. Output includes `status`, `connected_account_id`, `redirect_url`, and `toolkit`.
+Python:
 
-### Step 3 — Execute the tool
-
-```bash
-composio execute GMAIL_SEND_EMAIL --data '{"recipient_email":"you@example.com","subject":"Hello","body":"Test"}'
-composio execute GITHUB_CREATE_AN_ISSUE --data '{"owner":"acme","repo":"my-repo","title":"Bug report"}'
-```
-To see a tool's input parameters before executing:
-```bash
-composio execute GMAIL_SEND_EMAIL --help
-```
-
-### Step 4 — Listen for events (optional)
-
-```bash
-composio listen
-```
-
-Streams real-time trigger events to the terminal.
-
----
-
-## Tips for Agents
-
-- **All commands output JSON** — pipe to `jq` for filtering and extraction
-- **Agent login** — When the agent has no direct browser access, use `composio login --no-wait` to get the URL and key, share the URL with the user, then `composio login --key <key> --no-wait` once they complete login
-- **Parallel execution** — use `&` and `wait` or shell scripts for complex multi-step tasks
-- The default user context is the project's `test_user_id`. Pass `--user-id <id>` to act on behalf of a specific user.
-
-```bash
-composio execute GMAIL_SEND_EMAIL --user-id "user_123" --data '{"recipient_email":"them@example.com","subject":"Hi"}'
-```
-
-## Best Practices
-
-1. **Use `jq` for JSON** — Pipe CLI output to `jq` for filtering and extraction instead of parsing raw JSON.
-2. **Control output at source** — When fetching large amounts of data, use the tool's filters (if supported) to limit what is returned.
-3. **Offload analysis** — After understanding the schema, use inline bash scripts for heavy data analysis instead of manual inspection. Avoid using composio SDK for personal usecases only use the SDKs when building apps.
-4. **Parallelize independent actions** — For tools/actions that don't depend on each other, run them in parallel with `&` and `wait`. Use `xargs -P` or `parallel` only when the backend can handle the load.
-5. **Avoid large terminal dumps** — Filter, search, and summarize instead of outputting full datasets:
-   - Quick text filtering: `grep -E`, `rg` (ripgrep), `awk`, `sed`
-   - Summarize: `sort | uniq -c | sort -nr`, `wc -l`, `head`, `tail`
-   - For large output: `less`, `lnav` (logs), `tail -f` for streaming
-6. **Minimize file creation** — Use ephemeral files only when needed; create files only when the user explicitly asks.
-7. **Respect rate limits** — Be mindful of pagination and API/CLI rate limits when parallelizing.
-8. **Never invent tool slugs or app names** — Only use tools returned by `composio search`. For app names, use `composio manage toolkits info <slug>` or `composio manage tools info <tool>` to verify.
-9. **Do not trim `composio search` output** — Never pipe search results through `head`, `tail`, or similar. Use the full output to find the best tool match.
-
----
-
-## Advanced Commands
-
-### Discover Tools (when search isn't enough)
-
-```bash
-# List all toolkits
-composio manage toolkits list
-
-# Get details about a specific toolkit
-composio manage toolkits info "gmail"
-
-# List tools in a toolkit
-composio manage tools list --toolkits "gmail"
-
-# Get a tool's full schema
-composio manage tools info "GMAIL_SEND_EMAIL"
-```
-
-### Connected Accounts
-
-```bash
-# List active connections
-composio manage connected-accounts list --status ACTIVE
-
-# Link an account (full form with options)
-composio manage connected-accounts link --auth-config "ac_..." --user-id "user_123"
-
-# Delete a connection
-composio manage connected-accounts delete <id>
-```
-
-### Auth Configs
-
-> Only needed when building apps with custom OAuth credentials. For personal use and agents, `composio link` handles this automatically.
-
-```bash
-composio manage auth-configs list --toolkits "gmail"
-composio manage auth-configs create
-composio manage auth-configs info <id>
-composio manage auth-configs delete <id>
-```
-
-### Triggers
-
-```bash
-# List available trigger types
-composio manage triggers list
-composio manage triggers info "GMAIL_NEW_GMAIL_MESSAGE"
-
-# Manage trigger instances
-composio manage triggers create <trigger-name>
-composio manage triggers enable <id>
-composio manage triggers disable <id>
-composio manage triggers status
-```
-
-### Debugging & Logs
-
-```bash
-# View recent tool executions
-composio manage logs tools
-
-# Get detailed logs for a specific execution
-composio manage logs tools "log_abc123"
-
-# Monitor trigger events
-composio manage logs triggers
-```
----
-
-## jq Examples
-
-```bash
-# Extract toolkit slugs
-composio manage toolkits list | jq -r '.[].slug'
-
-# Get tool names from a toolkit
-composio manage tools list --toolkits "gmail" | jq -r '.[].name'
-
-# Filter active connections
-composio manage connected-accounts list --status ACTIVE | jq -r '.[].id'
-
-# Extract login URL and key from agent login flow
-composio login --no-wait | jq -r '.login_url'
-composio login --no-wait | jq -r '.key'
-```
-
-## Command Help
-
-Every command supports `--help` for detailed options:
-
-```bash
-composio --help
-composio login --help
-composio search --help
-composio execute --help
-composio link --help
-composio listen --help
-composio manage tools --help
-composio manage toolkits --help
-composio manage triggers --help
-```
-
----
-
-## 2. Building Apps and Agents with Composio
-
-<a name="building-apps-and-agents-with-composio"></a>
-
-### 2.1. Building with Composio
-
-<a name="building-with-composio"></a>
-
-**Impact:** 🟠 HIGH
-
-> SDK-based guide for building AI agents and applications that integrate with external tools via Composio
-
-# Building Apps and Agents with Composio
-
-Use the Composio SDK to build AI agents, chat apps, and backend services that integrate with 200+ external tools.
-
-## Project Setup
-
-Run inside your project directory to initialize and store the API key:
-```bash
-composio init
-```
-
-## Install the SDK
-
-**TypeScript**
-```bash
-pnpm install @composio/core@latest
-```
-
-Provider packages for agentic frameworks:
-- `@composio/vercel` — Vercel AI SDK
-- `@composio/openai-agents` — OpenAI Agents
-- `@composio/langchain` — LangChain
-- `@composio/mastra` — Mastra
-- `@composio/claude-agent-sdk` — Claude Agent SDK
-
-**Python**
 ```bash
 pip install composio
 ```
 
-Provider packages for agentic frameworks:
-- `composio-openai-agents` — OpenAI Agents
-- `composio-langchain` — LangChain
-- `composio-langgraph` — LangGraph
-- `composio-crewai` — CrewAI
-- `composio-claude-agent-sdk` — Claude Agent SDK
-- `composio-google-adk` — Google ADK
+Add a provider package only when the repository's framework requires one, for example `@composio/vercel`, `@composio/openai-agents`, `@composio/mastra`, `@composio/anthropic`, `composio-openai-agents`, or `composio-langchain`.
 
-Pass the provider into the Composio constructor:
+Do not introduce a second LLM framework solely for onboarding.
+
+## 4. Create a session for the current user
+
+A session is the runtime context for one user. It carries identity, connections, tool scope, and the remote sandbox.
+
+TypeScript:
+
 ```typescript
-import { Composio } from '@composio/core'
-import { VercelProvider } from '@composio/vercel'
+import { Composio } from "@composio/core";
 
-const composio = new Composio({ provider: new VercelProvider() })
+const composio = new Composio();
+const session = await composio.create("user_123");
+const tools = await session.tools();
 ```
+
+Python:
+
 ```python
 from composio import Composio
-from composio_langchain import LangchainProvider
 
-composio = Composio(provider=LangchainProvider())
+composio = Composio()
+session = composio.sessions.create(user_id="user_123")
+tools = session.tools()
 ```
 
----
+Use the application's stable database ID in production. Never use a shared `default` identity for multiple users.
 
-## Building Agents
+When the Getting Started dashboard supplies an onboarding user ID, use that exact value for the smoke test so the dashboard can correlate the tool-call log. Keep the application's real stable user ID in the production path.
 
-Use Tool Router to create isolated MCP sessions per user with scoped tool access and automatic auth management. Compatible with any AI framework.
+## 5. Put Composio into the existing agent
 
-### Session Management
-- [User ID Best Practices](tr-userid-best-practices.md) — choose user IDs for security and isolation
-- [Creating Basic Sessions](tr-session-basic.md) — initialize Tool Router sessions
-- [Session Lifecycle](tr-session-lifecycle.md) — when to create vs reuse sessions
-- [Session Configuration](tr-session-config.md) — configure toolkits, tools, and filters
-- [Using Native Tools](tr-mcp-vs-native.md) — prefer native tools for performance and control
+Pass the session tools to the repository's existing agent or model provider using its native tool integration. Preserve the current prompt, model, streaming, and request lifecycle unless a change is required for tools to execute.
 
-### Authentication Flows
-- [Auto Authentication in Chat](tr-auth-auto.md) — enable in-chat auth flows
-- [Manual Authorization](tr-auth-manual.md) — use `session.authorize()` for explicit flows
-- [Connection Management](tr-auth-connections.md) — configure `manageConnections`, `waitForConnections`, and callback URLs
+Sessions expose a small set of meta tools by default. The agent discovers the right integration and tool at runtime rather than loading thousands of schemas into context:
 
-### Toolkit Querying & UI Building
-- [Building Chat UIs](tr-building-chat-ui.md) — toolkit selection, connection management, and session handling
-- [Query Toolkit States](tr-toolkit-query.md) — use `session.toolkits()` to check connections and build connection UIs
+- `COMPOSIO_SEARCH_TOOLS`
+- `COMPOSIO_GET_TOOL_SCHEMAS`
+- `COMPOSIO_MULTI_EXECUTE_TOOL`
+- `COMPOSIO_MANAGE_CONNECTIONS`
+- `COMPOSIO_WAIT_FOR_CONNECTIONS`
+- `COMPOSIO_REMOTE_WORKBENCH`
+- `COMPOSIO_REMOTE_BASH_TOOL`
 
-### Framework Integrations
-- [Framework Integration](tr-framework-integration.md) — LangChain, OpenAI Agents, general patterns
-- [Vercel AI SDK](tr-framework-ai-sdk.md) — native tools, MCP, and React
-- [Mastra](tr-framework-mastra.md) — Mastra agents with native tools and MCP
+Keep connection management enabled for interactive agents. It is what returns a Connect Link when a user needs to authenticate an app.
 
-### Event-Driven Agents (Triggers)
-- [Creating Triggers](triggers-create.md) — set up trigger instances for real-time events
-- [Subscribing to Events](triggers-subscribe.md) — listen to trigger events in real-time
-- [Webhook Verification](triggers-webhook.md) — verify and process incoming webhook payloads
-- [Managing Triggers](triggers-manage.md) — enable, disable, update, and list triggers
+## 6. Prove it with a real call
 
----
+Setup is incomplete until a programmatic tool call succeeds from the developer's repository.
 
-## Building Apps
+For onboarding:
 
-Direct tool execution without agent frameworks — full control over auth, execution, and resource management. If building apps with agentic abilities, make sure the auth configs match the session's auth configs.
+1. Use the installed Composio skill and the existing agent path.
+2. Ask the agent to find a read-only web-search capability.
+3. Let it discover the actual toolkit and tool slug; never hard-code or guess one.
+4. Run the tool with the onboarding user ID supplied by the dashboard.
+5. Capture the real result and log ID.
 
-### Core Operations
-- [Fetching Tools](app-fetch-tools.md) — get tools with filters and search
-- [Direct Tool Execution](app-execute-tools.md) — execute tools manually with parameters
-- [Tool Version Management](app-tool-versions.md) — version pinning strategies for stability
+The smoke test must hit Composio. A mocked response, Playground call, schema fetch, or SDK initialization does not count.
 
-### Resource Management
-- [Connected Accounts CRUD](app-connected-accounts.md) — create, read, update, delete connected accounts
-- [Auth Config Management](app-auth-configs.md) — manage authentication configurations
-- [Toolkit Management](app-toolkits.md) — query toolkits, categories, and auth requirements
-- [Auth Popup UI](app-auth-popup-ui.md) — build popup-based OAuth flows
+If the repository has no runnable agent loop, add the smallest test entrypoint compatible with its existing LLM provider. Do not require a new hosted model solely for onboarding.
 
-### Extensibility
-- [Tool Modifiers](app-modifiers.md) — schema modification and execution hooks for logging and modifications
+## 7. Authentication happens when needed
 
-### User Context & Multi-Tenancy
-- [User ID Patterns](app-user-context.md) — user vs organization IDs, shared vs isolated connections
+Do not build OAuth. If a selected app is not connected, `COMPOSIO_MANAGE_CONNECTIONS` returns a Connect Link, the user authorizes in the browser, and the agent retries.
 
-### Event-Driven Applications
-- [Creating Triggers](triggers-create.md) — set up trigger instances
-- [Subscribing to Events](triggers-subscribe.md) — listen to events in real-time
-- [Webhook Verification](triggers-webhook.md) — verify incoming webhooks
-- [Managing Triggers](triggers-manage.md) — enable, disable, update triggers
+Start with managed auth. A custom auth config is needed only for custom branding, additional scopes, dedicated provider quotas, or self-hosted/regional requirements.
 
----
+## 8. Hand off the useful next steps
 
-## Verify Tool Slugs Before Use
+After the first call succeeds, show the developer where to continue:
 
-Never guess toolkit, tool, or trigger names. Always verify:
+- Logs for the exact request, response, duration, and log ID.
+- Toolkits to discover integrations.
+- Playground to experiment after codebase activation.
+- Auth Configs and Users when building a multi-user product.
+
+## Do not
+
+- Do not stop after linking documentation.
+- Do not use a fixed GitHub starring task as the onboarding concept.
+- Do not create an auth config as a prerequisite.
+- Do not guess tool or toolkit slugs.
+- Do not use direct execution for a new agent integration.
+- Do not claim success before a real programmatic tool call appears in logs.
+
+Current documentation index: `https://docs.composio.dev/llms.txt`.
+
+### Errors and provider gotchas
+
+These rules apply to both Composio products.
+
+## Start with the log ID
+
+Get the Composio log ID or request ID before diagnosing a failure. Framework wrappers often hide the underlying error.
 
 ```bash
-composio search "send email"
-composio manage tools info "GMAIL_SEND_EMAIL"
-composio manage toolkits info "gmail"
+composio dev logs tools
+composio dev logs triggers
+composio connections list
 ```
 
-Using incorrect slugs causes runtime errors.
+The dashboard Logs page provides the same execution trail.
 
----
+## Tool does not exist
 
+Never guess the slug. In a Platform session, discover it through `COMPOSIO_SEARCH_TOOLS`. In a direct CLI workflow, use `composio search`, then inspect the result with `composio execute <slug> --get-schema`.
 
----
+For manual legacy v3 execution, a missing tool is often a toolkit-version problem. Use a verified version or the v3.1 path that defaults to the current version. New session integrations should use runtime discovery instead of manually executing a guessed slug.
 
-_This file was automatically generated from individual rule files on 2026-03-13T12:37:41.138Z_
-_To update, run: `npm run build:agents`_
+## Authentication failures
+
+A 401 generally means the provider token was revoked, expired, or invalidated by a password, 2FA, or administrator-policy change. Reconnect the account and retry.
+
+If an authorization link expired, request a new one. Do not reuse it.
+
+## Provider constraints
+
+- Google "App is blocked": remove unnecessary scopes or use a verified custom OAuth app.
+- Slack 429s: managed apps share a provider quota; use a custom Slack app for a dedicated rate-limit bucket.
+- Microsoft 403s: the tenant may require administrator consent.
+- GitHub Apps: OAuth credentials and repository installation are separate steps.
+- Session Restriction errors for payment tools are policy restrictions, not plan or connection failures.
+
+## Production
+
+Managed auth is intended to make initial development easy. Before launch, use custom OAuth apps for integrations that need the developer's branding, scopes, or dedicated quotas.
+
+For toolkit-specific details, fetch:
+
+```text
+https://docs.composio.dev/toolkits/faq/<toolkit>.md
+```

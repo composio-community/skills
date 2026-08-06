@@ -1,80 +1,36 @@
 # Contributing to Composio Skills
 
-Thanks for contributing! This is kept intentionally simple.
+Keep the skill concise, current, and verifiable.
 
-## Adding a Rule
+## Adding guidance
 
-1. Create a new `.md` file in `skills/composio/rules/`
-2. Follow the naming: `{prefix}-{descriptive-name}.md`
-3. Use the structure below
+1. Add focused guidance to the relevant file in `skills/composio/references/`.
+2. Keep `SKILL.md` as the short product router; do not duplicate reference content there.
+3. Link any new reference directly from `SKILL.md` so `npm run build:agents` bundles it.
+4. Run `npm run build` and the skill validator before opening a pull request.
 
-## Rule Template
+## Reference structure
 
 ```markdown
----
-title: Clear, Action-Oriented Title
-impact: CRITICAL | HIGH | MEDIUM | LOW
-description: One sentence describing the impact
-tags: [relevant, tags]
----
+# Product or domain
 
-# Rule Title
+State when this guide applies and what successful completion means.
 
-1-2 sentences explaining why this matters.
+## Workflow
 
-## ❌ Incorrect
+1. Give the smallest safe action.
+2. Use current commands and real code.
+3. End with a verifiable outcome.
 
-\`\`\`typescript
-// Show the wrong way with explanatory comments
-const bad = 'example';
-\`\`\`
-
-\`\`\`python
-# Show the wrong way with explanatory comments
-bad = "example"
-\`\`\`
-
-## ✅ Correct
-
-\`\`\`typescript
-// Show the right way with explanatory comments
-const good = 'example';
-\`\`\`
-
-\`\`\`python
-# Show the right way with explanatory comments
-good = "example"
-\`\`\`
-
-## Reference
+## Fresh sources
 
 - [Relevant docs](https://docs.composio.dev)
 ```
 
 ## Guidelines
 
-- **One rule per file**: Keep it focused
-- **Real examples**: Use actual code, not pseudocode
-- **Both languages**: Include TypeScript and Python examples
-- **Explain why**: Use comments to explain reasoning
-- **Be actionable**: Developers should know exactly what to do
-
-## Impact Levels
-
-- **CRITICAL**: Security, data loss, breaking bugs
-- **HIGH**: Major performance or UX issues
-- **MEDIUM**: Maintainability, code quality
-- **LOW**: Style, minor optimizations
-
-## Prefixes
-
-- `auth-` - Authentication & Security
-- `exec-` - Tool Execution
-- `conn-` - Connected Accounts
-- `custom-` - Custom Tools
-- `provider-` - Provider Integration
-- `error-` - Error Handling
-- `perf-` - Performance
-- `dev-` - Development
-
-That's it! Keep it simple.
+- Keep one concern per section.
+- Use real examples, not pseudocode.
+- Keep TypeScript and Python aligned where both apply.
+- Put detail in references so the router stays small.
+- Do not claim setup is complete before one real tool call succeeds.

@@ -3,7 +3,7 @@
 /**
  * Watch Script for AGENTS.md
  *
- * Watches rule files and SKILL.md for changes and automatically rebuilds AGENTS.md
+ * Watches reference files and SKILL.md for changes and automatically rebuilds AGENTS.md
  */
 
 const fs = require('fs');
@@ -13,7 +13,7 @@ const { execSync } = require('child_process');
 // Paths
 const SKILLS_DIR = path.join(__dirname, '..', 'skills', 'composio');
 const SKILL_FILE = path.join(SKILLS_DIR, 'SKILL.md');
-const RULES_DIR = path.join(SKILLS_DIR, 'rules');
+const REFERENCES_DIR = path.join(SKILLS_DIR, 'references');
 
 // ANSI colors
 const colors = {
@@ -34,7 +34,7 @@ function rebuild() {
   log(`\n[${timestamp}] 🔄 Rebuilding AGENTS.md...`, 'yellow');
 
   try {
-    execSync('node scripts/build-agents.js', { stdio: 'inherit' });
+    execSync('node scripts/build-agents.cjs', { stdio: 'inherit' });
   } catch (error) {
     log('❌ Build failed', 'red');
   }
@@ -43,7 +43,7 @@ function rebuild() {
 log('\n👀 Watching for changes...', 'cyan');
 log('━'.repeat(50), 'cyan');
 log(`📁 SKILL.md: ${SKILL_FILE}`, 'blue');
-log(`📁 Rules: ${RULES_DIR}`, 'blue');
+log(`📁 References: ${REFERENCES_DIR}`, 'blue');
 log('━'.repeat(50), 'cyan');
 log('Press Ctrl+C to stop\n', 'magenta');
 
@@ -58,10 +58,10 @@ fs.watch(SKILL_FILE, (eventType, filename) => {
   }
 });
 
-// Watch rules directory
-fs.watch(RULES_DIR, { recursive: true }, (eventType, filename) => {
+// Watch references directory
+fs.watch(REFERENCES_DIR, { recursive: true }, (eventType, filename) => {
   if (filename && filename.endsWith('.md')) {
-    log(`\n📝 Rule changed: ${filename}`, 'yellow');
+    log(`\n📝 Reference changed: ${filename}`, 'yellow');
     rebuild();
   }
 });
