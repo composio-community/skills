@@ -4,8 +4,8 @@ Keep the skill concise, current, and verifiable.
 
 ## Adding guidance
 
-1. Add focused guidance to the relevant file in `skills/composio/references/`.
-2. Keep `SKILL.md` as the short product router; do not duplicate reference content there.
+1. Add focused guidance to the relevant skill's `references/` directory.
+2. Keep each `SKILL.md` focused; do not duplicate reference content there.
 3. Link any new reference directly from `SKILL.md` so `npm run build:agents` bundles it.
 4. Run `npm run build` and the skill validator before opening a pull request.
 

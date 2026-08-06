@@ -77,8 +77,6 @@ tools = session.tools()
 
 Use the application's stable database ID in production. Never use a shared `default` identity for multiple users.
 
-When the Getting Started dashboard supplies an onboarding user ID, use that exact value for the smoke test so the dashboard can correlate the tool-call log. Keep the application's real stable user ID in the production path.
-
 ## 5. Put Composio into the existing agent
 
 Pass the session tools to the repository's existing agent or model provider using its native tool integration. Preserve the current prompt, model, streaming, and request lifecycle unless a change is required for tools to execute.
@@ -104,7 +102,7 @@ For onboarding:
 1. Use the installed Composio skill and the existing agent path.
 2. Ask the agent to find a read-only web-search capability.
 3. Let it discover the actual toolkit and tool slug; never hard-code or guess one.
-4. Run the tool with the onboarding user ID supplied by the dashboard.
+4. Run the tool through the project selected during `composio dev init`.
 5. Capture the real result and log ID.
 
 The smoke test must hit Composio. A mocked response, Playground call, schema fetch, or SDK initialization does not count.
@@ -123,8 +121,8 @@ After the first call succeeds, show the developer where to continue:
 
 - Logs for the exact request, response, duration, and log ID.
 - Toolkits to discover integrations.
-- Playground to experiment after codebase activation.
-- Auth Configs and Users when building a multi-user product.
+- Users for stable per-user identities and connections.
+- Auth Configs when the product needs custom authentication behavior.
 
 ## Do not
 

@@ -1,28 +1,25 @@
-# Composio agent skill
+# Composio agent skills
 
-Install the Composio skill in a project so a coding agent can add Composio to an existing codebase, configure authentication safely, and continue until one real tool call succeeds.
+Install the focused setup skill when a coding agent should add Composio Platform to an existing codebase and continue until one real tool call succeeds:
 
 ## Install
 
 Auto-detect the coding agent:
 
 ```bash
-npx skills add composiohq/skills --skill composio -y
+npx skills add composiohq/skills --skill setup-composio -y
 ```
 
-Or choose one explicitly:
+Use the broader product-routing skill when the request could be either Composio For You or Composio Platform:
 
 ```bash
-npx skills add composiohq/skills --skill composio -a codex -y
-npx skills add composiohq/skills --skill composio -a claude-code -y
-npx skills add composiohq/skills --skill composio -a cursor -y
+npx skills add composiohq/skills --skill composio -y
 ```
 
 Project-local installation is the default. Add `--global` only when the skill should apply across every repository.
 
-## What it handles
+## What the setup skill handles
 
-- Separates Composio For You from Composio Platform before setup.
 - Inspects an existing codebase before choosing SDK or framework packages.
 - Uses `composio dev init` for Platform project authentication.
 - Integrates sessions into the developer's existing agent instead of creating a canned demo.
@@ -41,9 +38,16 @@ skills/composio/
 │   ├── errors.md
 │   ├── for-you.md
 │   └── platform.md
+skills/setup-composio/
+├── SKILL.md
+├── AGENTS.md
+├── agents/
+│   └── openai.yaml
+└── references/
+    └── platform.md
 ```
 
-`SKILL.md` routes the agent to one product guide. `AGENTS.md` is generated as a consolidated fallback:
+Each `AGENTS.md` is generated as a consolidated fallback:
 
 ```bash
 npm run build:agents

@@ -3,9 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const skillsDir = path.join(__dirname, "..", "skills", "composio");
-const skillFile = path.join(skillsDir, "SKILL.md");
-const outputFile = path.join(skillsDir, "AGENTS.md");
+const skillsRoot = path.join(__dirname, "..", "skills");
 
 function parseFrontmatter(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---\n/);
@@ -43,7 +41,9 @@ function collectReferences(body) {
   return references;
 }
 
-function buildAgents() {
+function buildAgents(skillsDir) {
+  const skillFile = path.join(skillsDir, "SKILL.md");
+  const outputFile = path.join(skillsDir, "AGENTS.md");
   const source = fs.readFileSync(skillFile, "utf8");
   const { frontmatter, body } = parseFrontmatter(source);
   const references = collectReferences(body);
@@ -75,4 +75,13 @@ function buildAgents() {
   console.log(`Bundled ${references.length} referenced files`);
 }
 
-buildAgents();
+const skillDirs = fs
+  .readdirSync(skillsRoot, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => path.join(skillsRoot, entry.name))
+  .filter((dir) => fs.existsSync(path.join(dir, "SKILL.md")))
+  .sort();
+
+for (const skillDir of skillDirs) {
+  buildAgents(skillDir);
+}
