@@ -1,11 +1,11 @@
 ---
 name: composio
-description: Use when the user mentions Composio, wants to add Composio to an agent or codebase, or wants an AI agent to act in real apps such as Gmail, Slack, GitHub, Notion, Calendar, or Linear.
+description: Use when the user mentions Composio, wants to add Composio to an agent or codebase, wants an AI agent to act in real apps such as Gmail, Slack, GitHub, Notion, Calendar, or Linear, or needs help fixing a Composio setup, connection, or tool call.
 ---
 
 # Composio
 
-Composio gives AI agents authenticated access to 1000+ apps.
+Composio gives AI agents tools and authenticated access to external apps.
 
 There are two products. They have different URLs, keys, and setup paths. Decide which one applies before doing anything else, and do not blend them.
 

@@ -61,7 +61,7 @@ TypeScript:
 import { Composio } from "@composio/core";
 
 const composio = new Composio();
-const session = await composio.create("user_123");
+const session = await composio.sessions.create("user_123");
 const tools = await session.tools();
 ```
 
@@ -76,6 +76,18 @@ tools = session.tools()
 ```
 
 Use the application's stable database ID in production. Never use a shared `default` identity for multiple users.
+
+Create a session for an agentic run. For a multi-turn conversation, persist the returned session ID and resume it instead of creating a fresh session on every message:
+
+```typescript
+const sessionId = session.sessionId;
+const resumedSession = await composio.use(sessionId);
+```
+
+```python
+session_id = session.session_id
+resumed_session = composio.use(session_id)
+```
 
 ## 5. Put Composio into the existing agent
 
@@ -100,10 +112,11 @@ Setup is incomplete until a programmatic tool call succeeds from the developer's
 For onboarding:
 
 1. Use the installed Composio skill and the existing agent path.
-2. Ask the agent to find a read-only web-search capability.
-3. Let it discover the actual toolkit and tool slug; never hard-code or guess one.
-4. Run the tool through the project selected during `composio dev init`.
-5. Capture the real result and log ID.
+2. Ask the developer which integration they want to try unless the repository already makes the choice clear.
+3. Let the session discover the actual toolkit and tool slug; never hard-code or guess one.
+4. If the integration is not connected, return the Connect Link, wait for authorization, and retry.
+5. Run one safe, read-only tool from the existing agent through the project selected during `composio dev init`.
+6. Capture the real result and log ID.
 
 The smoke test must hit Composio. A mocked response, Playground call, schema fetch, or SDK initialization does not count.
 
