@@ -30,9 +30,21 @@ function log(message, color = 'reset') {
 }
 
 /**
+ * Normalize line endings to LF.
+ *
+ * On Windows a git clone checks out CRLF, so every rule file starts with `---\r\n` and the
+ * frontmatter regex below never matches. That silently drops impact badges and descriptions,
+ * and inlines each rule's raw frontmatter into AGENTS.md.
+ */
+function normalizeEol(content) {
+  return content.replace(/\r\n/g, '\n');
+}
+
+/**
  * Parse frontmatter from markdown file
  */
-function parseFrontmatter(content) {
+function parseFrontmatter(rawContent) {
+  const content = normalizeEol(rawContent);
   const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
   const match = content.match(frontmatterRegex);
 
@@ -138,7 +150,7 @@ function buildAgentsMd() {
     process.exit(1);
   }
 
-  const skillContent = fs.readFileSync(SKILL_FILE, 'utf-8');
+  const skillContent = normalizeEol(fs.readFileSync(SKILL_FILE, 'utf-8'));
   const { frontmatter: skillFrontmatter, content: skillBody } = parseFrontmatter(skillContent);
 
   log('✓ Read SKILL.md', 'green');
@@ -195,11 +207,10 @@ function buildAgentsMd() {
   let output = '';
 
   // Add header from SKILL.md frontmatter
-  output += '---\n';
-  Object.entries(skillFrontmatter).forEach(([key, value]) => {
-    output += `${key}: ${value}\n`;
-  });
-  output += '---\n\n';
+  // Emit the raw frontmatter text verbatim. The parsed form cannot be re-serialized:
+  // parseFrontmatter() trims each key, so a nested block (`metadata:` / `  version:`) loses
+  // its indentation and comes back as two top-level keys.
+  output += skillContent.match(/^---\n[\s\S]*?\n---\n/)[0] + '\n';
 
   // Add title
   output += `# ${skillFrontmatter.name || 'Composio Agent Skills'}\n\n`;
